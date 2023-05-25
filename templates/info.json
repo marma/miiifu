@@ -1,0 +1,17 @@
+{
+    "@context": "http://iiif.io/api/image/3/context.json",
+    "@id": "{{ id | safe }}",
+    "@type": "iiif:Image",
+    "protocol": "http://iiif.io/api/image",
+    "width": {{ info['width'] }},
+    "height": {{ info['height'] }},
+    "tiles": [ { "width" : 512, "scaleFactors" : [ {{ levels | join(', ') }} ]  } ],
+    "profile" : [
+        "http://iiif.io/api/image/2/level1.json",
+        {
+            "formats" : [ "jpg" ],
+            "qualities" : [ "native" ],
+            "supports" : [ "sizeByConfinedWh" ]
+        }
+    ]
+}
