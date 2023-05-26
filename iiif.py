@@ -1,4 +1,7 @@
-def crop_coords(info, region):
+from utils import HttpException
+
+# TODO: rewrite
+def region_coords(info, region):
     width = info['width']
     height = info['height']
 
@@ -22,13 +25,13 @@ def crop_coords(info, region):
         return (0,0,width, height)
 
 
-def resize_coords(info, scale, tile_size=None):
-    width = info['width']
-    height = info['height']
+# TODO: rewrite
+def scale_dimensions(info, region_coords, scale, tile_size=None):
+    width = region_coords[2] # info['width']
+    height = region_coords[3] # info['height']
+    max_resize = 2048
 
     if scale not in [ 'full', 'max' ]:
-        max_resize = int(get_setting('max_resize', '20000'))
-
         if scale[:4] == 'pct:':
             s = float(scale[4:])/100
             if s <= 1.0:
@@ -67,8 +70,11 @@ def resize_coords(info, scale, tile_size=None):
             else:
                 #s = [ min(int(s[0]), image.width), min(int(s[1]), image.height) ]
                 w,h = int(s[0]), int(s[1])
+    else:
+        w,h = width, height
 
-        return (w,h)
-
-    return (width, height)
+    if w > max_resize or h > max_resize:
+        raise HttpException(f'width ({w}) or height ({h}) larger than max resize limit ({max_resize})', 400)
+        
+    return (w, h)
 

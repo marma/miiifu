@@ -1,5 +1,15 @@
-from subprocess imoport run
+from subprocess import run
 from iiif import region_coords, scale_coords
+from subprocess import run,PIPE,DEVNULL
+from j2k import cropscale_j2k
+fromm logger import debug,info,warning,error
+
+def convert(info, path, region, size):
+    if info['format'] == 'JPEG2000':
+        return cropscale_j2k(info, path, region, size)
+
+    raise HttpException(f'Format not supported ({info.get("format")})', 400)
+
 
 def cropscale_j2k(path, info, region, scale, oversample=False):
 	ow,oh = info['width'], info['height']
@@ -17,11 +27,13 @@ def cropscale_j2k(path, info, region, scale, oversample=False):
 
     # run decompress
     with NamedTemporaryFile(suffix='.tif') as t:
-        cmd = f'{decompress_command} -r {reduce_factor} -d {x},{y},{x+w},{y+h} -i {path} -OutFor TIF -o {t.name}'
-        ret = run(cmd)
+        cmd = f'{decompress_command} -r {reduce_factor} -d {x},{y},{x+w},{y+h} -i "{path}" -OutFor TIF -o "{t.name}"'.split()
+        ret = run(cmd, check=False, text=True, stderr=PIPE, stdout=DEVNULL)
 
-        if ret != 0:
-            throw Exception('command: "{cmd}" returned non-zero ({ret})')
+        if ret.returncode != 0:
+            error(ret.stderr)
+
+            raise HttpException('Error while decoding JPEG2000', 500)
 
         with Image.open(t.name) as im:
             im.load()
@@ -31,9 +43,6 @@ def cropscale_j2k(path, info, region, scale, oversample=False):
     # sharpen
     im = im.filter(ImageFilter.UnsharpMask(radius=0.8, percent=90, threshold=3))
 
-    b = BytesIO()
-    im.save(b, quality=90, progressive=True, format='jpeg')
-
-    return b
+    return im
 
 

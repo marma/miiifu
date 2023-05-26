@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from io import BytesIO
 from flask import Flask,request,render_template,Response,redirect,url_for
 from flask_caching import Cache
 from yaml import load as yload,FullLoader
@@ -7,32 +8,42 @@ from os.path import exists,join
 from json import dumps,loads
 from iiif import get_region, get_size
 from resolve import resolve_identifier
-from subroutine import run
-from j2k import cropscale_j2k
+from utils import HttpException
 
 cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
 app = Flask(__name__)
 cache.init_app(app)
-config = {}
+config = yload(open(join(app.root_path, 'config.yml')).read(), Loader=FullLoader)
+
+mimes = {
+    'jpg': 'image/jpeg',
+    'tif': 'image/tiff',
+    'jp2': 'image/jpeg2000',
+    'png': 'image/png'
+}
 
 @app.route('/iiif/<identifier>/<region>/<size>/<float:rotation>/<quality>.<fmt>')
 def iiif_image(identifier, region, size, rotation, quality, fmt):
     try:
         validate(region, size, rotation, quality, fmt)
-    except Exception as e:
-        return str(e), 400
+        path = resolve(identifier)
+        info = get_info(path)
 
-    path = resolve(identifier)
-    info = get_info(path)
-    if info:
-        if info['format'] == 'JPEG2000':
-            b = cropscale_j2k(info, path, region, size)
+        if info:
+            return Response(
+                    export(
+                        convert(
+                            info,
+                            path,
+                            region,
+                            size),
+                        quality,
+                        fmt),
+                    mime_type(mimes[fmt]))
 
-            return Response(b, mime_type='image/jpeg')
-        else:
-            return f'Format not supported ({info.get("format")})', 400
-
-    return 'Not found', 404
+        return 'Not found', 404
+    except HttpException as e:
+        return str(e), e.status_code
 
 
 @app.route('/iiif/<identifier>/info.json')
@@ -58,4 +69,11 @@ def get_info(path):
 @cache.cached()
 def resolve(identifier):
     return resolve_identifier(identifier, config.get('resolve', {})
+
+
+def export(im, quality, fmt):
+    b = BytesIO()
+    im.save(b, quality=90, progressive=True, format='jpeg')
+
+    return b.getvalue()
 
