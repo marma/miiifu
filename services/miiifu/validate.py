@@ -1,7 +1,7 @@
 from re import match
 
 valid_region = r'full|[0-9]+,[0-9]+,[0-9]+,[0-9]'
-valid_scale = r'max|full|[!^]?([0-9]*,[0-9]+|[0-9]+,[0-9]*'
+valid_scale = r'max|full|[!^]?([0-9]*,[0-9]+|[0-9]+,[0-9]*)'
 
 def validate(region, scale, rotation, quality, fmt):
     validate_region(region)
@@ -17,7 +17,7 @@ def validate_region(region):
 
 
 def validate_scale(scale):
-	if not match(valid_scale, scale):
+    if not match(valid_scale, scale):
         raise Exception(f'')
 
 
@@ -32,6 +32,6 @@ def validate_quality(quality):
 
 
 def validate_format(fmt):
-    if fmt != 'jpg':
+    if fmt not in [ 'jpg', 'png' ]:
         raise Exception(f'')
 

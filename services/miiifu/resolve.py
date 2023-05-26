@@ -14,15 +14,13 @@ def resolve_identifier(identifier, config):
         elif resolver.get('type') == 'json':
             resolver = json_resolver
 
-        ret = resolver(ret, resolver)
+        ret = resolver(ret, resolver_config)
 
     return ret
     
 
 def base64_resolver(identifier, config):
-    return safe_join(
-                config.prefix_path,
-                b64decode(identifier))
+    return b64decode(identifier)
 
 
 def url_resolver(identifier, config):

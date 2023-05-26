@@ -3,14 +3,14 @@ version: "3.5"
 services:
     miiifu:
         build:
-            context: ./docker
+            context: services/miiifu
         expose:
             - 5000
         ports:
             - 5000:5000
         volumes:
-            - ./services/web:/app:ro
+            - ./services/miiifu:/app:ro
             # change this to actual data directory
             - ./test_data:/data
-        command: /usr/local/bin/gunicorn -k gevent --reload --workers 2 --worker-connections 5 --access-logfile=- --pythonpath /app -b :5000 miiifu:app
+        command: /venv/bin/gunicorn -k gevent --reload --workers 2 --worker-connections 5 --access-logfile=- --pythonpath /app -b :5000 miiifu:app
 

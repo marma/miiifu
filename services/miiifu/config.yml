@@ -1,4 +1,5 @@
 path_prefix: /data
-
-resolve_chain: []
+decompress_command: /usr/bin/grk_decompress
+resolve:
+    resolve_chain: []
 

@@ -3,17 +3,23 @@
 from io import BytesIO
 from flask import Flask,request,render_template,Response,redirect,url_for
 from flask_caching import Cache
+from werkzeug.security import safe_join
 from yaml import load as yload,FullLoader
 from os.path import exists,join
 from json import dumps,loads
-from iiif import get_region, get_size
+from iiif import region_coords, scale_dimensions
 from resolve import resolve_identifier
-from utils import HttpException
+from utils import HttpException,RegexConverter
+from logging import debug,info,warning,error
+from validate import validate
+from convert import convert
+from PIL import Image
 
 cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
 app = Flask(__name__)
 cache.init_app(app)
 config = yload(open(join(app.root_path, 'config.yml')).read(), Loader=FullLoader)
+app.url_map.converters['regex'] = RegexConverter
 
 mimes = {
     'jpg': 'image/jpeg',
@@ -22,7 +28,7 @@ mimes = {
     'png': 'image/png'
 }
 
-@app.route('/iiif/<identifier>/<region>/<size>/<float:rotation>/<quality>.<fmt>')
+@app.route('/iiif/<identifier>/<region>/<size>/<rotation>/<regex("default"):quality>.<fmt>')
 def iiif_image(identifier, region, size, rotation, quality, fmt):
     try:
         validate(region, size, rotation, quality, fmt)
@@ -39,7 +45,7 @@ def iiif_image(identifier, region, size, rotation, quality, fmt):
                             size),
                         quality,
                         fmt),
-                    mime_type(mimes[fmt]))
+                    mimetype=mimes[fmt])
 
         return 'Not found', 404
     except HttpException as e:
@@ -54,26 +60,39 @@ def iiif_info(identifier):
     if info:
         return render_template('info.json', **info, mime_type='application/json')
 
-	return 'Not found', 404
+    return 'Not found', 404
 
 
-@cache.cached()
+#@cache.cached()
 def get_info(path):
-	if exists(path):
+    if exists(path):
         with Image.open(path) as i:
-    	    return { 'format': i.format, 'width': i.width, 'height': i.height }
+            return { 'format': i.format, 'width': i.width, 'height': i.height }
 
-	return None
+    return None
 
 
-@cache.cached()
+#@cache.cached()
 def resolve(identifier):
-    return resolve_identifier(identifier, config.get('resolve', {})
+    assert('path_prefix' in config)
+    assert(config.get('path_prefix') not in [ '/', '.', '..' ])
+
+    return safe_join(
+                config.get('path_prefix'),
+                resolve_identifier(
+                    identifier,
+                    config.get('resolve', {})))
 
 
 def export(im, quality, fmt):
     b = BytesIO()
-    im.save(b, quality=90, progressive=True, format='jpeg')
+    icc_profile = im.info.get("icc_profile")
+    im.save(
+        b,
+        icc_profile=icc_profile,
+        quality=90,
+        progressive=True,
+        format='jpeg' if fmt == 'jpg' else fmt)
 
     return b.getvalue()
 
