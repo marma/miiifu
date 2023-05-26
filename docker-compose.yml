@@ -10,3 +10,7 @@ services:
             - 5000:5000
         volumes:
             - ./services/web:/app:ro
+            # change this to actual data directory
+            - ./test_data:/data
+        command: /usr/local/bin/gunicorn -k gevent --reload --workers 2 --worker-connections 5 --access-logfile=- --pythonpath /app -b :5000 miiifu:app
+
