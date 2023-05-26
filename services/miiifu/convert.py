@@ -53,11 +53,13 @@ def cropscale_j2k(info, path, region, scale, oversample=False):
         with Image.open(t.name) as im:
             im.load()
 
+    scale_factors = (sw/w, sh/h)
     im = im.resize((sw, sh), resample=Image.LANCZOS)
     im = im.convert('RGB')
 
-    # sharpen
-    im = im.filter(ImageFilter.UnsharpMask(radius=0.8, percent=90, threshold=3))
+    # sharpen?
+    if scale_factors[0] < 1.0 or scale_factors[1] < 1.0:
+        im = im.filter(ImageFilter.UnsharpMask(radius=0.8, percent=90, threshold=3))
 
     return im
 
