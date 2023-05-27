@@ -10,10 +10,11 @@ from json import dumps,loads
 from iiif import region_coords, scale_dimensions
 from resolve import resolve_identifier
 from utils import HttpException,RegexConverter
-from logging import debug,info,warning,error
+from logging import debug,info as log_info,warning,error
 from validate import validate
 from convert import convert
 from PIL import Image
+from time import time
 
 cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
 app = Flask(__name__)
@@ -30,6 +31,7 @@ mimes = {
 
 @app.route('/iiif/<identifier>/<region>/<size>/<rotation>/<regex("default"):quality>.<fmt>')
 def iiif_image(identifier, region, size, rotation, quality, fmt):
+    t0 = time()
     try:
         validate(region, size, rotation, quality, fmt)
         path = resolve(identifier)
@@ -51,6 +53,8 @@ def iiif_image(identifier, region, size, rotation, quality, fmt):
         return 'Not found', 404
     except HttpException as e:
         return str(e), e.status_code
+    finally:
+        log_info(f'request took {int(1000*(time()-t0))}ms')
 
 
 @app.route('/iiif/<identifier>/info.json')
