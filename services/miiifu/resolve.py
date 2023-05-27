@@ -7,17 +7,18 @@ from base64 import b64decode
 def resolve_identifier(identifier, config):
     ret = identifier
 
-    for resolver_config in config.get('chain', []):
-        if resolver_config.get('type') == 'base64':
-            resolver = base64_resolver
-        elif resolver_config.get('type') == 'url':
-            resolver = url_resolver
-        elif resolver_config.get('type') == 'json':
-            resolver = json_resolver
-        else:
-            raise HttpException(f'Unknown resolver type {resolver_config.get("type")}', 500)
+    if config.get('chain', []):
+        for resolver_config in config.get('chain', []):
+            if resolver_config.get('type') == 'base64':
+                resolver = base64_resolver
+            elif resolver_config.get('type') == 'url':
+                resolver = url_resolver
+            elif resolver_config.get('type') == 'json':
+                resolver = json_resolver
+            else:
+                raise HttpException(f'Unknown resolver type {resolver_config.get("type")}', 500)
 
-        ret = resolver(ret, resolver_config)
+            ret = resolver(ret, resolver_config)
 
     return ret
     

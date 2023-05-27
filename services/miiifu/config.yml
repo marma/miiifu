@@ -1,5 +1,10 @@
 path_prefix: /data
 decompress_command: /usr/bin/grk_decompress
-resolve:
-    resolve_chain: []
-
+resolution:
+    chain:
+#        - type: base64
+#        - type: url
+#          prefix: https://example.org/
+#        - type: json
+#          key: path
+           
