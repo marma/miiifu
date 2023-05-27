@@ -35,7 +35,7 @@ def cropscale_j2k(info, path, region, scale, oversample=False):
 
     # run decompress
     with NamedTemporaryFile(suffix='.tif') as t:
-        cmd = f'{decompress_command} -V -r {reduce_factor} -d {x},{y},{x+w},{y+h} -i {path} -o {t.name}'
+        cmd = f'{decompress_command} -r {reduce_factor} -d {x},{y},{x+w},{y+h} -i {path} -o {t.name}'
         log_info(cmd)
 
         t0=time()

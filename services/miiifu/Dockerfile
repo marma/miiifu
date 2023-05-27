@@ -12,4 +12,4 @@ RUN . /venv/bin/activate && pip install -r /requirements.txt
 
 EXPOSE 5000
 
-CMD . /venv/bin/activate && /venv/bin/gunicorn -k gevent --reload --workers 2 --worker-connections 5 --access-logfile=- --pythonpath /app
+CMD . /venv/bin/activate && /venv/bin/gunicorn -k gevent --reload --workers 5 --worker-connections 10 --access-logfile=- --pythonpath /app -b :5000 miiifu:app

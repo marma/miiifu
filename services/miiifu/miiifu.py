@@ -38,6 +38,7 @@ def iiif_image(identifier, region, size, rotation, quality, fmt):
         if info:
             return Response(
                     export(
+                        info,
                         convert(
                             info,
                             path,
@@ -63,16 +64,16 @@ def iiif_info(identifier):
     return 'Not found', 404
 
 
-#@cache.cached()
+@cache.memoize()
 def get_info(path):
     if exists(path):
         with Image.open(path) as i:
-            return { 'format': i.format, 'width': i.width, 'height': i.height }
+            return { 'format': i.format, 'width': i.width, 'height': i.height, 'icc_profile': i.info.get("icc_profile", None) }
 
     return None
 
 
-#@cache.cached()
+@cache.memoize()
 def resolve(identifier):
     assert('path_prefix' in config)
     assert(config.get('path_prefix') not in [ '/', '.', '..' ])
@@ -84,9 +85,10 @@ def resolve(identifier):
                     config.get('resolve', {})))
 
 
-def export(im, quality, fmt):
+def export(info, im, quality, fmt):
     b = BytesIO()
-    icc_profile = im.info.get("icc_profile")
+    icc_profile = im.info.get("icc_profile", None)
+
     im.save(
         b,
         icc_profile=icc_profile,
