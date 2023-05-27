@@ -12,5 +12,9 @@ services:
             - ./services/miiifu:/app:ro
             # change this to actual data directory
             - ./test_data:/data
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "50m"
         command: /venv/bin/gunicorn -k gevent --reload --workers 2 --worker-connections 5 --access-logfile=- --pythonpath /app -b :5000 miiifu:app
 

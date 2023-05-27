@@ -86,7 +86,7 @@ def resolve(identifier):
                 config.get('path_prefix'),
                 resolve_identifier(
                     identifier,
-                    config.get('resolve', {})))
+                    config.get('resolution', {})))
 
 
 def export(info, im, quality, fmt):
